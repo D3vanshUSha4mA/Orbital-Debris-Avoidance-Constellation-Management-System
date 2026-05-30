@@ -1,72 +1,68 @@
-## Running the System
+# 🚀 Running the System (Backend)
 
-Follow these steps to start the complete system.
-
----
-
-### 1. Start the Backend
-
-From the project root directory:
-
-```bash
-uvicorn main:app --reload
-```
-
-The backend will start at:
-
-```
-http://localhost:8000
-```
+The Project AETHER backend (physics engine, KD-Tree collision detection, and stateful evasion manager) is fully containerized for seamless deployment. The live telemetry streamer runs locally to feed real-world SGP4 data into the container.
 
 ---
 
-### 2. Start the Telemetry Generator
+## Prerequisites
 
-Open a new terminal and run:
-
-```bash
-python telemetry_generator.py
-```
-
-This script generates satellite and debris telemetry and streams it to the backend.
+* **Docker Desktop** installed and running.
+* **Python 3.10+** installed locally (for the telemetry streamer).
 
 ---
 
-### 3. Start the Frontend
+# 1. Build and Run the Backend Container
 
-Navigate to the frontend directory:
-
-```bash
-cd frontend/orbital-insight
-```
-
-Install dependencies (first time only):
+Open your terminal in the root directory of the project and build the Docker image:
 
 ```bash
-npm install
+docker build -t aether-backend .
 ```
 
-Run the development server:
+Start the container, mapping it to port `8000`:
 
 ```bash
-npm run dev
+docker run -p 8000:8000 aether-backend
 ```
 
-The frontend will run at:
+The API is now live and actively listening for telemetry at:
 
-```
-http://localhost:5173
+```text
+http://localhost:8000/api/telemetry
 ```
 
 ---
 
-### 4. Open the Dashboard
+## Troubleshooting: "Port is already allocated"
 
-Open the following URL in your browser:
+If Docker fails to bind to port `8000`, a previous server instance is likely stuck in the background.
 
+To clear it on Windows, open an **Administrator Command Prompt**:
+
+### Find the PID
+
+```bash
+netstat -ano | findstr :8000
 ```
-http://localhost:5173
+
+### Kill the PID
+
+```bash
+taskkill /PID <PID_NUMBER> /F
 ```
 
-The dashboard will start displaying satellites and debris once the telemetry generator is running.
+---
 
+# 2. Launch the "Kobayashi Maru" Data Streamer
+
+The backend requires a continuous feed of coordinate data to run the collision algorithms.
+
+Open a **second, separate terminal** in the project root, activate your virtual environment, and start the streamer:
+
+```bash
+# Activate your virtual environment (Windows)
+.\venv\Scripts\activate
+
+# Start the real-time propagation engine
+python live_streamer.py
+```
