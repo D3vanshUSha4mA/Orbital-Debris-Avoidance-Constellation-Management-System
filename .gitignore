@@ -1,1 +1,41 @@
-venv
+# --- Environment Variables & Secrets ---
+.env
+.env.local
+.env.*.local
+*.env
+secrets/
+
+# --- Python Virtual Environments ---
+venv/
+.venv/
+env/
+ENV/
+bin/
+lib/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+
+# --- Node/Frontend Dependencies ---
+node_modules/
+/dist
+/build
+.eslintcache
+.vite/
+
+# --- OS & IDE Specific Files ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# --- Docker & Local Logs ---
+*.log
+.dockerignore
