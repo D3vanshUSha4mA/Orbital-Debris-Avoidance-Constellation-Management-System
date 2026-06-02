@@ -21,34 +21,49 @@ satellites = load.tle_file(CELESTRAK_STARLINK_URL)
 active_starlinks = satellites[:MAX_STARLINKS]
 print(f"Loaded {len(active_starlinks)} live Starlink satellites.")
 
-def generate_kobayashi_maru_debris(target_position, target_velocity):
+def generate_kobayashi_maru_debris(current_payload, total_debris=300, target_count=5):
     """
-    Creates a synthetic debris cloud targeting a specific satellite's XYZ coordinates.
+    Distributes a synthetic debris cloud across multiple target satellites
+    so the UI shows various conjunction warnings.
     """
     debris_list = []
     
-    for i in range(DEBRIS_COUNT):
-        # Create a fragmentation spread formatted as x,y,z dictionaries
-        r_offset = {
-            "x": target_position["x"] + random.uniform(-10.0, 10.0),
-            "y": target_position["y"] + random.uniform(-10.0, 10.0),
-            "z": target_position["z"] + random.uniform(-10.0, 10.0)
-        }
+    # Use a fixed slice of satellites so the debris clouds follow 
+    # the same targets frame-by-frame and don't teleport randomly.
+    threatened_sats = current_payload[:target_count]
+    
+    # Safely handle cases where we have fewer satellites than target_count
+    actual_target_count = len(threatened_sats)
+    if actual_target_count == 0:
+        return debris_list
         
-        # Make the debris retrograde (head-on collision course)
-        v_offset = {
-            "x": -target_velocity["x"] + random.uniform(-0.5, 0.5),
-            "y": -target_velocity["y"] + random.uniform(-0.5, 0.5),
-            "z": -target_velocity["z"] + random.uniform(-0.5, 0.5)
-        }
-        
-        debris_list.append({
-            "id": f"DEB-KOBAYASHI-{i}",
-            "type": "debris",
-            "r": r_offset,
-            "v": v_offset
-        })
-        
+    debris_per_target = total_debris // actual_target_count
+    
+    debris_id = 0
+    for sat in threatened_sats:
+        for _ in range(debris_per_target):
+            # Create a fragmentation spread localized around the target satellite
+            r_offset = {
+                "x": sat["r"]["x"] + random.uniform(-10.0, 10.0),
+                "y": sat["r"]["y"] + random.uniform(-10.0, 10.0),
+                "z": sat["r"]["z"] + random.uniform(-10.0, 10.0)
+            }
+            
+            # Retrograde collision course relative to target
+            v_offset = {
+                "x": -sat["v"]["x"] + random.uniform(-0.5, 0.5),
+                "y": -sat["v"]["y"] + random.uniform(-0.5, 0.5),
+                "z": -sat["v"]["z"] + random.uniform(-0.5, 0.5)
+            }
+            
+            debris_list.append({
+                "id": f"DEB-KOBAYASHI-{debris_id}",
+                "type": "debris",
+                "r": r_offset,
+                "v": v_offset
+            })
+            debris_id += 1
+            
     return debris_list
 
 # ==========================================
@@ -80,12 +95,10 @@ try:
                 "v": vel_dict
             })
             
-        # 2. Inject SYNTHETIC Debris Cloud
-        target_r = payload[0]["r"]
-        target_v = payload[0]["v"]
-        
-        debris_cloud = generate_kobayashi_maru_debris(target_r, target_v)
-        payload.extend(debris_cloud)
+        # 2. Inject SYNTHETIC Debris Cloud across 5 different satellites
+        if payload:
+            debris_cloud = generate_kobayashi_maru_debris(payload, DEBRIS_COUNT, target_count=5)
+            payload.extend(debris_cloud)
         
         # 3. Format and Send to the Docker Backend
         request_data = {

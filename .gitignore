@@ -39,3 +39,8 @@ Thumbs.db
 # --- Docker & Local Logs ---
 *.log
 .dockerignore
+# --- Python Cache ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
