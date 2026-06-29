@@ -13,6 +13,7 @@ async def get_visualization_snapshot():
     # 1. Format Satellites
     formatted_satellites = []
     for sat_id, data in SIMULATION_STATE.get("satellites", {}).items():
+        # Using *args failsafe we added earlier just in case
         lat, lon, alt = eci_to_lat_lon_alt(
             data["r"]["x"],
             data["r"]["y"],
@@ -52,17 +53,20 @@ async def get_visualization_snapshot():
             "alt_km": round(alt, 3)
         })
 
-    # 3. Suppress active warnings for satellites currently evading
+    # 3. THE FIX: Pass all warnings directly to the UI
+    # We must not filter out evading satellites, otherwise the UI logs will be empty!
     raw_warnings = SIMULATION_STATE.get("active_warnings", [])
-    active_warnings = [w for w in raw_warnings if w["satellite_id"] not in evading_sats]
-    
     predictive_warnings = SIMULATION_STATE.get("future_cdms", [])
 
     return {
         "timestamp": timestamp,
         "total_tracked_objects": len(formatted_satellites) + len(formatted_debris),
-        "warning_count": len(active_warnings),
-        "active_warnings": active_warnings,
+        
+        # Provide both keys to ensure React catches the data regardless of the exact prop name
+        "warning_count": len(raw_warnings),
+        "warnings": raw_warnings,
+        "active_warnings": raw_warnings,
+        
         "predictive_warning_count": len(predictive_warnings),
         "predictive_warnings": predictive_warnings,
         "satellites": formatted_satellites,

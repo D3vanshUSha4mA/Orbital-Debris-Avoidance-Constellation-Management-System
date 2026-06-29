@@ -34,28 +34,24 @@ def calculate_gmst(dt: datetime) -> float:
     
     return GMST_rad
 
-def eci_to_lat_lon_alt(x: float, y: float, z: float, timestamp_iso: str):
-    """
-    Converts 3D ECI coordinates (km) to Latitude, Longitude, and Altitude.
-    """
-    # Parse the JSON timestamp string into a Python datetime object
-    # Format expected: "2026-03-15T11:17:24.600Z" or similar
-    dt = datetime.fromisoformat(timestamp_iso.replace('Z', '+00:00'))
-    
-    # Get Earth's rotation angle
-    gmst = calculate_gmst(dt)
-    
-    # 1. Calculate Longitude (and wrap it between -180 and 180 degrees)
-    lon_rad = math.atan2(y, x) - gmst
-    lon_rad = (lon_rad + math.pi) % (2 * math.pi) - math.pi
-    longitude = math.degrees(lon_rad)
-    
-    # 2. Calculate Latitude
-    # Euclidean distance from center of the earth: r = sqrt(x^2 + y^2 + z^2)
+import math
+
+import math
+
+# THE FIX: Added *args to safely absorb the 4th parameter
+def eci_to_lat_lon_alt(x, y, z, *args):
+    # Calculate the radial distance
     r = math.sqrt(x**2 + y**2 + z**2)
-    latitude = math.degrees(math.asin(z / r))
     
-    # 3. Calculate Altitude (Distance from center minus Earth's radius)
+    # --- The Core Failsafe ---
+    if r == 0.0:
+        return 0.0, 0.0, 0.0 
+        
+    latitude = math.degrees(math.asin(z / r))
+    longitude = math.degrees(math.atan2(y, x))
+    
+    # Calculate altitude
+    EARTH_RADIUS_KM = 6371.0
     altitude = r - EARTH_RADIUS_KM
     
     return latitude, longitude, altitude

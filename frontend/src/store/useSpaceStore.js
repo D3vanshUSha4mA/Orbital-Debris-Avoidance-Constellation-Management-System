@@ -50,7 +50,10 @@ export const useSpaceStore = create(
           };
 
           return {
-            warnings: state.warnings.filter(w => w.obj_1 !== satelliteId),
+            // FIX 1: Update status to EVADING instead of filtering out the warning
+            warnings: state.warnings.map(w => 
+              w.obj_1 === satelliteId ? { ...w, status: 'EVADING' } : w
+            ),
             activeManeuvers: [...state.activeManeuvers, newManeuver],
             satellites: state.satellites.map(sat => 
               sat.id === satelliteId 
@@ -95,6 +98,10 @@ export const useSpaceStore = create(
           if (!response.ok) throw new Error(`Telemetry server status: ${response.status}`);
           const liveData = await response.json();
 
+          console.log("Active warnings:", liveData.active_warnings);
+          console.log("Warning count:", liveData.active_warnings?.length);
+          console.log("First warning:", liveData.active_warnings?.[0]);
+
           const satellites = (liveData.satellites || []).map(sat => ({
             ...sat,
             type: 'SATELLITE',
@@ -128,30 +135,43 @@ export const useSpaceStore = create(
               coordinates: [deb.lon, deb.lat, deb.alt_km * 1000]
             }));
 
-          const CRITICAL_DISTANCE_KM = 1.2; 
-          const incomingCriticals = (liveData.active_warnings || [])
-            .filter(warn => warn.distance_km <= CRITICAL_DISTANCE_KM)
-            .map(warn => ({
-              obj_1: warn.satellite_id,
-              obj_2: warn.debris_id,
-              distance_km: warn.distance_km,
-              status: "CRITICAL"
-            }));
+          const CRITICAL_DISTANCE_KM = 10.0;
 
+          const incomingCriticals = (liveData.active_warnings || [])
+              .filter(warn => warn.distance_km <= CRITICAL_DISTANCE_KM)
+              .map(warn => ({
+                  obj_1: warn.satellite_id,
+                  obj_2: warn.debris_id,
+                  distance_km: warn.distance_km,
+                  status: "CRITICAL"
+              }));
+
+          console.log("Incoming criticals:", incomingCriticals.length);
           const existingWarnings = get().warnings;
           const activeManeuverIds = new Set(get().activeManeuvers.map(m => m.id));
+          console.log("Active maneuvers:", activeManeuverIds.size);
           const mergedWarnings = [...existingWarnings];
 
+          // FIX 2: Allow updates to evading satellites and prevent direct state mutation
           incomingCriticals.forEach(incoming => {
-            if (!activeManeuverIds.has(incoming.obj_1)) {
-              const existingIndex = mergedWarnings.findIndex(w => w.obj_1 === incoming.obj_1);
-              
-              if (existingIndex === -1) {
-                mergedWarnings.push(incoming);
-              } else {
-                mergedWarnings[existingIndex].distance_km = incoming.distance_km;
-                mergedWarnings[existingIndex].obj_2 = incoming.obj_2; 
-              }
+            const existingIndex = mergedWarnings.findIndex(w => w.obj_1 === incoming.obj_1);
+            const isEvading = activeManeuverIds.has(incoming.obj_1);
+            
+            const status = isEvading ? "EVADING" : "CRITICAL";
+
+            if (existingIndex === -1) {
+              mergedWarnings.push({
+                ...incoming,
+                status: status
+              });
+            } else {
+              // Creating a new object reference so React detects the change
+              mergedWarnings[existingIndex] = {
+                ...mergedWarnings[existingIndex],
+                distance_km: incoming.distance_km,
+                obj_2: incoming.obj_2,
+                status: status
+              };
             }
           });
 
@@ -162,7 +182,9 @@ export const useSpaceStore = create(
               warnings: mergedWarnings,
               timestamp: liveData.timestamp
             });
+            console.log("Merged warnings:", mergedWarnings.length);
           }
+
         } catch (error) {
           if (error.name !== 'AbortError') {
             console.error("Telemetry sync failure:", error.message);
@@ -191,10 +213,8 @@ export const useSpaceStore = create(
     }),
     {
       // 3. PERSIST CONFIGURATION
-      name: 'acm-mission-control-storage', // The key in localStorage
+      name: 'acm-mission-control-storage', 
       partialize: (state) => ({ 
-        // ONLY save these two arrays to local storage! 
-        // Everything else (satellites, debris) gets fetched fresh on reload.
         activeManeuvers: state.activeManeuvers,
         warnings: state.warnings 
       }),

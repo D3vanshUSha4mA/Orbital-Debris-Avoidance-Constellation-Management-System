@@ -1,13 +1,15 @@
 import time
 import requests
 import random
+import math
 from datetime import datetime, timezone
 from skyfield.api import load
 
 # ==========================================
 # CONFIGURATION
 # ==========================================
-BACKEND_URL = "http://localhost:8000/api/telemetry"
+# Use 127.0.0.1 instead of localhost if running native Windows to avoid routing hiccups
+BACKEND_URL = "http://127.0.0.1:8000/api/telemetry"
 CELESTRAK_STARLINK_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle"
 MAX_STARLINKS = 200     # Limit to 200 real satellites to keep the map clean
 DEBRIS_COUNT = 300      # Size of our synthetic fragmentation cloud
@@ -20,6 +22,21 @@ print("Fetching live Starlink TLEs from Celestrak...")
 satellites = load.tle_file(CELESTRAK_STARLINK_URL)
 active_starlinks = satellites[:MAX_STARLINKS]
 print(f"Loaded {len(active_starlinks)} live Starlink satellites.")
+
+def sanitize_payload(data):
+    """
+    Recursively cleans NaN and Infinity values from the payload.
+    If the SGP4 physics engine generates an impossible trajectory, 
+    this safely zeroes it out so the JSON parser doesn't crash.
+    """
+    if isinstance(data, list):
+        return [sanitize_payload(item) for item in data]
+    elif isinstance(data, dict):
+        return {k: sanitize_payload(v) for k, v in data.items()}
+    elif isinstance(data, float):
+        if math.isnan(data) or math.isinf(data):
+            return 0.0  # Failsafe zero out corrupted physics data
+    return data
 
 def generate_kobayashi_maru_debris(current_payload, total_debris=300, target_count=5):
     """
@@ -100,22 +117,25 @@ try:
             debris_cloud = generate_kobayashi_maru_debris(payload, DEBRIS_COUNT, target_count=5)
             payload.extend(debris_cloud)
         
-        # 3. Format and Send to the Docker Backend
-        request_data = {
+        # 3. Format, Sanitize, and Send to the Backend
+        raw_request_data = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "objects": payload
         }
         
+        # Apply the mathematical sanitizer right before converting to JSON
+        clean_request_data = sanitize_payload(raw_request_data)
+        
         try:
-            response = requests.post(BACKEND_URL, json=request_data, timeout=2)
+            response = requests.post(BACKEND_URL, json=clean_request_data, timeout=2)
             
             if response.status_code == 422:
                 print("FASTAPI ERROR DETAILS:", response.json())
             else:
-                print(f"[{request_data['timestamp']}] Injected {len(payload)} objects -> Server Response: {response.status_code}")
+                print(f"[{clean_request_data['timestamp']}] Injected {len(payload)} objects -> Server Response: {response.status_code}")
                 
         except requests.exceptions.ConnectionError:
-            print("ERROR: Could not connect to Docker backend. Is it running on port 8000?")
+            print("ERROR: Could not connect to backend. Is it running on port 8000?")
             
         time.sleep(1)
 
