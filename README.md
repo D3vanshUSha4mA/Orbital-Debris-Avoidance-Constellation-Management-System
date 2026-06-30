@@ -22,7 +22,7 @@
 
 <img src="images/showcase.png" width="950" alt="AETHER Dashboard">
 
-*Replace this image with your dashboard screenshot or demo GIF.*
+
 
 </div>
 
