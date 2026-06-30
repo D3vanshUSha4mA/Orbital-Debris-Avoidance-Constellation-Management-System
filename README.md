@@ -2,27 +2,27 @@
 
 <div align="center">
 
-[![Contributors](https://img.shields.io/github/contributors/YOUR_USERNAME/AETHER?style=for-the-badge)](https://github.com/YOUR_USERNAME/AETHER/graphs/contributors)
-[![Forks](https://img.shields.io/github/forks/YOUR_USERNAME/AETHER?style=for-the-badge)](https://github.com/YOUR_USERNAME/AETHER/network/members)
-[![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/AETHER?style=for-the-badge)](https://github.com/YOUR_USERNAME/AETHER/stargazers)
-[![Issues](https://img.shields.io/github/issues/YOUR_USERNAME/AETHER?style=for-the-badge)](https://github.com/YOUR_USERNAME/AETHER/issues)
-[![License](https://img.shields.io/github/license/YOUR_USERNAME/AETHER?style=for-the-badge)](https://github.com/YOUR_USERNAME/AETHER/blob/main/LICENSE)
+[![Contributors](https://img.shields.io/github/contributors/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System?style=for-the-badge)](https://github.com/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System/graphs/contributors)
+[![Forks](https://img.shields.io/github/forks/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System?style=for-the-badge)](https://github.com/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System/network/members)
+[![Stars](https://img.shields.io/github/stars/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System?style=for-the-badge)](https://github.com/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System/stargazers)
+[![Issues](https://img.shields.io/github/issues/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System?style=for-the-badge)](https://github.com/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System/issues)
+[![License](https://img.shields.io/github/license/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System?style=for-the-badge)](https://github.com/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System/blob/main/LICENSE)
 
 <br>
 
-# 🛰️ AETHER: Autonomous Constellation Manager
+# 🛰️ AETHER
 
-### Real-Time Orbital Collision Avoidance & Fleet Evasion System
+### Autonomous Constellation Manager
 
-*A high-fidelity full-stack mission control platform for real-time satellite telemetry ingestion, predictive orbital physics, collision detection, and autonomous orbital maneuver planning.*
+### Real-Time Orbital Collision Avoidance & Fleet Management System
+
+*A full-stack mission control platform capable of ingesting live satellite telemetry, predicting future conjunctions, autonomously planning collision avoidance maneuvers, and visualizing orbital environments in real time.*
 
 <br>
 
-<!-- ================= HERO IMAGE ================= -->
+<img src="images/showcase.png" width="950" alt="AETHER Dashboard">
 
-<img src="images/showcase.png" width="900" alt="AETHER Showcase">
-
-*(Replace this with a screenshot or GIF of the dashboard.)*
+*Replace this image with your dashboard screenshot or demo GIF.*
 
 </div>
 
@@ -31,13 +31,13 @@
 # Table of Contents
 
 - [About The Project](#about-the-project)
-- [Core Features](#core-features)
+- [Key Features](#key-features)
 - [System Architecture](#system-architecture)
-- [Mathematical Implementation](#mathematical-implementation)
-- [Performance & Scalability](#performance--scalability)
+- [Physics & Algorithms](#physics--algorithms)
+- [Performance](#performance)
 - [Project Structure](#project-structure)
-- [Screenshots](#screenshots)
-- [Installation](#installation)
+- [Screenshot](#screenshot)
+- [Getting Started](#getting-started)
 - [API Reference](#api-reference)
 - [Future Improvements](#future-improvements)
 - [License](#license)
@@ -46,212 +46,245 @@
 
 # About The Project
 
-Modern satellite constellations contain thousands of spacecraft sharing densely populated orbital shells. Detecting conjunctions in real time requires continuously processing orbital telemetry, predicting future trajectories, and responding autonomously before potential collisions occur.
+Modern satellite constellations contain thousands of spacecraft operating within densely populated orbital shells. Predicting orbital conjunctions in real time requires continuously propagating trajectories, efficiently searching nearby objects, and responding before potential collisions occur.
 
-**AETHER** is a real-time orbital collision avoidance platform designed for the National Space Science Hackathon. The system ingests live satellite telemetry, predicts conjunctions using numerical integration, and visualizes the complete orbital environment through an interactive WebGL dashboard.
+**AETHER** is a real-time orbital collision avoidance system that combines orbital mechanics, numerical integration, spatial indexing, asynchronous backend services, and an interactive 3D visualization dashboard into a unified mission-control platform.
 
-The project combines orbital mechanics, high-performance spatial indexing, asynchronous backend processing, and modern frontend visualization into a single mission-control platform.
-
----
-
-# Core Features
-
-## Live Telemetry
-
-- Real-time Starlink TLE ingestion
-- Automatic orbital propagation
-- Continuous 1Hz telemetry updates
-- Skyfield integration
+The system continuously streams live satellite telemetry, predicts future conjunctions using Runge-Kutta integration, detects potential collisions through KD-Tree spatial partitioning, and autonomously executes avoidance maneuvers whenever predefined safety thresholds are exceeded.
 
 ---
 
-## Orbital Physics
+# Key Features
 
-- RK4 numerical integration
-- Future trajectory prediction
-- Autonomous collision detection
-- Orbital maneuver planning
+## 🛰️ Live Telemetry Ingestion
 
----
-
-## Collision Detection
-
-- SciPy cKDTree spatial partitioning
-- Real-time conjunction monitoring
-- Immediate threat detection
-- 24-hour future prediction
+- Fetches live Starlink TLEs directly from Celestrak
+- Continuous 1 Hz telemetry updates
+- Skyfield-based orbital propagation
+- Real-time position and velocity computation
 
 ---
 
-## Autonomous Evasion
+## ☄️ Synthetic Debris Simulation
 
-- Automatic altitude adjustments
-- Dynamic orbital rerouting
-- Conjunction Data Message (CDM) generation
-- Collision avoidance logic
+Generates dynamic fragmentation clouds for stress-testing collision detection algorithms.
+
+Features include:
+
+- Targeted debris generation
+- Configurable cloud sizes
+- Dynamic trajectories
+- Real-time visualization
 
 ---
 
-## Interactive Dashboard
+## 📡 Predictive Orbital Physics
 
-- React + Tailwind CSS
-- React Three Fiber
-- WebGL Earth visualization
-- Real-time telemetry updates
+Predicts future satellite positions using high-precision numerical integration.
+
+Includes:
+
+- RK4 orbital propagation
+- 24-hour conjunction prediction
+- Future trajectory simulation
+- Continuous state updates
+
+---
+
+## ⚠️ Collision Detection Engine
+
+Efficiently detects conjunctions using spatial indexing.
+
+Features:
+
+- SciPy cKDTree
+- Nearest-neighbor search
+- Immediate collision detection
+- Future conjunction analysis
+
+---
+
+## 🚀 Autonomous Collision Avoidance
+
+When conjunction thresholds are exceeded, the engine automatically computes avoidance maneuvers.
+
+Current implementation:
+
+- Automatic orbital altitude adjustment
+- Safety threshold monitoring
+- Dynamic trajectory modification
+
+---
+
+## 🌍 Interactive Mission Control Dashboard
+
+Modern WebGL visualization powered by React.
+
+Includes:
+
+- Interactive Earth model
+- Satellite visualization
+- Debris rendering
 - Live conjunction logs
+- Real-time telemetry updates
 
 ---
 
 # System Architecture
 
-AETHER is divided into three independent services to maximize responsiveness and scalability.
+The platform is divided into three independent services to maximize responsiveness and maintain real-time performance.
 
 ---
 
-## 1. Live Telemetry Streamer
+## 1. Telemetry Streamer
 
-The streamer acts as an external radar station.
+Acts as the external tracking station.
 
 Responsibilities:
 
-- Downloads Starlink TLEs from Celestrak
-- Computes position and velocity vectors
-- Generates synthetic debris
-- Sanitizes invalid numerical values
-- Streams telemetry every second
+- Download Starlink TLEs
+- Propagate orbital states
+- Generate synthetic debris
+- Sanitize invalid numerical values
+- Stream telemetry every second
 
 ---
 
 ## 2. FastAPI Backend
 
-The backend serves as the mission control engine.
+Serves as the mission-control engine.
 
 Responsibilities:
 
-- High-speed telemetry ingestion
-- Raw byte parsing
-- Immediate conjunction detection
-- Background future prediction
-- Autonomous orbital maneuvers
+- High-throughput telemetry ingestion
+- Immediate collision detection
+- Future prediction engine
+- Autonomous maneuver planning
 
 Performance optimizations include:
 
-- Raw request parsing
-- Background workers
+- Raw byte request parsing
+- Background prediction tasks
 - Deep-copy simulation states
-- GIL yielding during heavy physics calculations
+- GIL yielding during heavy computations
 
 ---
 
 ## 3. React Dashboard
 
-Mission control interface providing:
+Mission-control interface providing:
 
 - 3D Earth visualization
-- Live satellite tracking
-- Debris cloud rendering
-- Conjunction warnings
-- Fleet status monitoring
+- Satellite tracking
+- Debris rendering
+- Conjunction monitoring
+- Fleet management
 
-Built using:
+Technology Stack:
 
 - React
 - Tailwind CSS
-- Zustand
 - React Three Fiber
+- Zustand
 
 ---
 
-# Mathematical Implementation
+# Physics & Algorithms
 
 ## Runge-Kutta 4th Order (RK4)
 
-Future satellite positions are calculated using fourth-order Runge-Kutta numerical integration.
+Future orbital positions are computed using fourth-order Runge-Kutta numerical integration.
 
-Unlike simple linear extrapolation, RK4 accurately models continuously changing orbital trajectories.
+Advantages:
 
-Benefits:
-
-- High numerical stability
-- Accurate long-term prediction
-- Reduced integration error
+- High numerical accuracy
+- Stable orbital propagation
+- Low accumulated integration error
+- Accurate long-term trajectory prediction
 
 ---
 
 ## KD-Tree Spatial Partitioning
 
-Naively comparing every object against every other object requires
+Checking every object against every other object requires
 
 ```math
 O(N^2)
 ```
 
-time.
+comparisons.
 
-Instead, AETHER organizes all orbital objects inside a SciPy cKDTree, reducing collision detection complexity to
+Instead, AETHER organizes orbital objects inside a SciPy cKDTree, reducing the search complexity to
 
 ```math
 O(N \log N)
 ```
 
-allowing thousands of objects to be processed efficiently on consumer hardware.
+allowing thousands of orbital objects to be processed efficiently.
 
 ---
 
-# Performance & Scalability
+## Data Sanitization
 
-Current development configuration:
+Orbital propagation occasionally produces invalid numerical values caused by decaying trajectories or floating-point instability.
+
+Before transmission, every payload is recursively sanitized by replacing:
+
+- NaN
+- Infinity
+- Invalid floating-point values
+
+ensuring reliable JSON serialization.
+
+---
+
+# Performance
+
+Current development configuration
 
 | Metric | Value |
-|----------|--------|
+|---------|-------|
 | Satellites | 200 |
 | Debris | 300 |
 | Total Objects | 500 |
-| Telemetry Rate | 1 Hz |
+| Update Frequency | 1 Hz |
 | Prediction Window | 24 Hours |
 
 ---
 
-## Current Limitation
+## Scalability
 
-The orbital engine itself comfortably scales to over **10,000 tracked objects**.
+The mathematical engine has been tested with simulations containing over **10,000 orbital objects**.
 
-Current bottleneck:
+Current bottlenecks originate primarily from:
 
-- Large JSON payloads (~2 MB/sec)
-- Windows ↔ WSL2 Docker network fragmentation
-- HTTP polling overhead
+- Large JSON payload transmission
+- Windows ↔ WSL2 networking overhead
+- HTTP polling latency
 
----
-
-## Planned Scaling Roadmap
-
-- Native Linux deployment
-- Cloud-hosted backend
-- WebSocket streaming
-- Vectorized RK4 implementation
-- NumPy optimization
-- Distributed simulation workers
+The underlying collision detection algorithm remains scalable due to KD-Tree spatial indexing.
 
 ---
 
 # Project Structure
 
 ```text
-AETHER/
+Orbital-Debris-Avoidance-Constellation-Management-System/
 
 │
 ├── backend/
-│   ├── main.py
-│   ├── physics/
 │   ├── api/
+│   ├── physics/
 │   ├── models/
+│   ├── services/
+│   ├── main.py
 │   └── requirements.txt
 │
 ├── frontend/
 │   ├── src/
 │   ├── components/
 │   ├── store/
+│   ├── public/
 │   └── package.json
 │
 ├── live_streamer.py
@@ -266,11 +299,7 @@ AETHER/
 
 ---
 
-# Screenshots
-
-## Mission Control Dashboard
-
-> Replace the image below with your dashboard screenshot or GIF.
+# Screenshot
 
 <p align="center">
 
@@ -280,7 +309,7 @@ AETHER/
 
 ---
 
-# Installation
+# Getting Started
 
 ## Prerequisites
 
@@ -290,15 +319,15 @@ AETHER/
 
 ---
 
-## 1. Clone Repository
+## Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/AETHER.git
+git clone https://github.com/D3vanshUSha4mA/Orbital-Debris-Avoidance-Constellation-Management-System.git
 ```
 
 ---
 
-## 2. Backend Setup
+## Backend Setup
 
 ```bash
 cd backend
@@ -324,7 +353,7 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## 3. Frontend Setup
+## Frontend Setup
 
 ```bash
 cd frontend
@@ -334,7 +363,7 @@ npm install
 npm start
 ```
 
-Frontend:
+Open:
 
 ```
 http://localhost:3000
@@ -342,13 +371,13 @@ http://localhost:3000
 
 ---
 
-## 4. Start Telemetry Streamer
+## Start Live Telemetry Streamer
 
 ```bash
 python live_streamer.py
 ```
 
-The dashboard will immediately populate with satellites, debris, and conjunction warnings.
+The dashboard will begin rendering satellites, debris objects, and conjunction warnings in real time.
 
 ---
 
@@ -362,15 +391,15 @@ Example payload:
 
 ```json
 {
-  "timestamp": "...",
+  "timestamp": "2026-06-29T15:23:46Z",
   "objects": [
     {
       "id": "STARLINK-1008",
       "type": "satellite",
       "r": {
-        "x": 4200,
-        "y": -1200,
-        "z": 5500
+        "x": 4200.1,
+        "y": -1200.4,
+        "z": 5500.9
       },
       "v": {
         "x": 7.4,
@@ -386,14 +415,18 @@ Example payload:
 
 ## GET `/api/visualization/snapshot`
 
-Returns current visualization data.
+Returns the latest visualization state.
 
-Response:
+Example response:
 
-- Satellites
-- Debris
-- Conjunction warnings
-- Timestamp
+```json
+{
+  "timestamp": "...",
+  "satellites": [],
+  "debris": [],
+  "warnings": []
+}
+```
 
 ---
 
@@ -401,14 +434,15 @@ Response:
 
 Planned enhancements include:
 
-- WebSocket telemetry streaming
+- WebSocket-based telemetry streaming
 - Multi-constellation support
-- ML-based collision prediction
-- Distributed physics engine
 - GPU-accelerated orbital propagation
+- Distributed simulation workers
+- Machine learning-based conjunction prediction
 - Interactive maneuver planning
 - Historical replay mode
 - Space weather integration
+- Cloud-native deployment
 
 ---
 
@@ -416,14 +450,14 @@ Planned enhancements include:
 
 Distributed under the MIT License.
 
-See `LICENSE` for more information.
+See the `LICENSE` file for more information.
 
 ---
 
 <div align="center">
 
-**Built With**
+## Built With
 
-Python • FastAPI • React • Tailwind CSS • React Three Fiber • Skyfield • SciPy • NumPy • Zustand • Docker
+**Python • FastAPI • React • Tailwind CSS • React Three Fiber • Skyfield • SciPy • NumPy • Zustand • Docker**
 
 </div>
