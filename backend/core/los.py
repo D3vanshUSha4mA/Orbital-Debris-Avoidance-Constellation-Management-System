@@ -75,6 +75,10 @@ def validate_line_of_sight(r_sat_eci_dict: dict, timestamp_iso: str) -> bool:
 
     r_sat_eci = np.array([r_sat_eci_dict["x"], r_sat_eci_dict["y"], r_sat_eci_dict["z"]])
     
+    if not timestamp_iso:
+        print("Warning: No timestamp provided. Failing LOS validation.")
+        return False
+
     # Get Earth's rotation angle at this exact moment
     dt = datetime.fromisoformat(timestamp_iso.replace('Z', '+00:00'))
     gmst_rad = calculate_gmst(dt)

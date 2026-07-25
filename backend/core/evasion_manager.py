@@ -17,14 +17,69 @@ class EvasionManager:
         and mathematically overrides the coordinates of evading satellites.
         """
         current_time = time.time()
+        from backend.core.state import SIMULATION_STATE
+        from backend.core.evasion import calculate_evasion_sequence
+        import requests
+        import threading
+        
+        current_iso = SIMULATION_STATE.get("last_updated")
 
         # 1. Read warnings and trigger new evasions
         for w in warnings:
-            if w.get("status") == "CRITICAL":
+            if w.get("status") in ["CRITICAL", "PREDICTED"]:
                 sat_id = w.get("obj_1")
                 # Only trigger if it isn't already evading
-                if sat_id not in self.active_evasions:
+                if sat_id and sat_id not in self.active_evasions:
                     self.active_evasions[sat_id] = current_time
+                    
+                    # AUTOPILOT LOGIC: Trigger Evasion and Graveyard sequences
+                    sat_data = SIMULATION_STATE.get("satellites", {}).get(sat_id)
+                    if sat_data and current_iso:
+                        
+                        # --- BLACKOUT ZONE FORECASTING ---
+                        if w.get("status") == "PREDICTED":
+                            from backend.core.physics import rk4_step
+                            from backend.core.los import validate_line_of_sight
+                            from datetime import datetime, timedelta
+                            import numpy as np
+                            
+                            tca_str = w.get("time_of_closest_approach")
+                            if tca_str:
+                                try:
+                                    tca = datetime.fromisoformat(tca_str.replace('Z', '+00:00'))
+                                    curr = datetime.fromisoformat(current_iso.replace('Z', '+00:00'))
+                                    time_to_tca = (tca - curr).total_seconds()
+                                    
+                                    # If TCA is > 20 mins away, check LOS at TCA - 15 mins
+                                    if time_to_tca > 1200:
+                                        check_time = time_to_tca - 900
+                                        r_pred, _ = rk4_step(
+                                            np.array([sat_data["r"]["x"], sat_data["r"]["y"], sat_data["r"]["z"]]),
+                                            np.array([sat_data["v"]["x"], sat_data["v"]["y"], sat_data["v"]["z"]]),
+                                            check_time
+                                        )
+                                        pred_iso = (curr + timedelta(seconds=check_time)).isoformat().replace('+00:00', 'Z')
+                                        r_pred_dict = {"x": r_pred[0], "y": r_pred[1], "z": r_pred[2]}
+                                        if not validate_line_of_sight(r_pred_dict, pred_iso):
+                                            print(f"📡 BLACKOUT ZONE FORECASTED for {sat_id} at {pred_iso}. Uplinking Evasion Sequence EARLY.")
+                                except Exception as e:
+                                    print(f"Blackout forecast error: {e}")
+
+                        payload = calculate_evasion_sequence(
+                            sat_id, 
+                            sat_data["r"], 
+                            sat_data["v"], 
+                            current_iso,
+                            sat_data.get("mass", 50.0)
+                        )
+                        
+                        # Dispatch to API asynchronously so we don't block telemetry
+                        def schedule_burn():
+                            try:
+                                requests.post("http://127.0.0.1:8000/api/maneuver/schedule", json=payload, timeout=2)
+                            except Exception:
+                                pass
+                        threading.Thread(target=schedule_burn).start()
 
         # 2. Apply mathematical overrides to the live objects
         for obj in objects:

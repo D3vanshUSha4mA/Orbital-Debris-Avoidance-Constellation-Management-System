@@ -22,8 +22,6 @@
 
 <img src="images/showcase.png" width="950" alt="AETHER Dashboard">
 
-
-
 </div>
 
 ---
@@ -34,7 +32,7 @@
 - [Key Features](#key-features)
 - [System Architecture](#system-architecture)
 - [Physics & Algorithms](#physics--algorithms)
-- [Performance](#performance)
+- [Performance & Benchmarking](#performance--benchmarking)
 - [Project Structure](#project-structure)
 - [Screenshot](#screenshot)
 - [Getting Started](#getting-started)
@@ -48,7 +46,7 @@
 
 Modern satellite constellations contain thousands of spacecraft operating within densely populated orbital shells. Predicting orbital conjunctions in real time requires continuously propagating trajectories, efficiently searching nearby objects, and responding before potential collisions occur.
 
-**AETHER** is a real-time orbital collision avoidance system that combines orbital mechanics, numerical integration, spatial indexing, asynchronous backend services, and an interactive 3D visualization dashboard into a unified mission-control platform.
+**AETHER** is a real-time orbital collision avoidance system that combines orbital mechanics, numerical integration, spatial indexing, asynchronous backend services, and an interactive Deck.GL visualization dashboard into a unified mission-control platform.
 
 The system continuously streams live satellite telemetry, predicts future conjunctions using Runge-Kutta integration, detects potential collisions through KD-Tree spatial partitioning, and autonomously executes avoidance maneuvers whenever predefined safety thresholds are exceeded.
 
@@ -58,23 +56,22 @@ The system continuously streams live satellite telemetry, predicts future conjun
 
 ## 🛰️ Live Telemetry Ingestion
 
-- Fetches live Starlink TLEs directly from Celestrak
-- Continuous 1 Hz telemetry updates
+- Fetches live Starlink and Debris TLEs directly from Celestrak
+- Continuous 1 Hz telemetry updates with resilient local-fallback parsing
 - Skyfield-based orbital propagation
-- Real-time position and velocity computation
+- Real-time ECI-to-Lat/Lon conversion using accurate GMST math
 
 ---
 
 ## ☄️ Synthetic Debris Simulation
 
-Generates dynamic fragmentation clouds for stress-testing collision detection algorithms.
+Generates dynamic fragmentation clouds and "rogue" intercepting orbits for stress-testing collision detection algorithms.
 
 Features include:
-
-- Targeted debris generation
+- Targeted rogue debris generation for guaranteed interception testing
+- Uses SGP4 for background debris and RK4 for custom high-velocity rogue objects
 - Configurable cloud sizes
-- Dynamic trajectories
-- Real-time visualization
+- Dynamic trajectory visualization
 
 ---
 
@@ -83,24 +80,22 @@ Features include:
 Predicts future satellite positions using high-precision numerical integration.
 
 Includes:
-
-- RK4 orbital propagation
+- RK4 orbital propagation (modeling J2 perturbations)
+- Configurable fine-grained prediction step sizes (e.g. 30s intervals)
 - 24-hour conjunction prediction
-- Future trajectory simulation
-- Continuous state updates
+- Continuous state updates and dynamic blackout zone forecasting
 
 ---
 
 ## ⚠️ Collision Detection Engine
 
-Efficiently detects conjunctions using spatial indexing.
+Efficiently detects conjunctions using advanced spatial indexing.
 
 Features:
-
-- SciPy cKDTree
-- Nearest-neighbor search
+- SciPy cKDTree for high-load object partitioning
+- Nearest-neighbor sub-150ms search
 - Immediate collision detection
-- Future conjunction analysis
+- Dynamic 10km warning radius filtering
 
 ---
 
@@ -109,24 +104,23 @@ Features:
 When conjunction thresholds are exceeded, the engine automatically computes avoidance maneuvers.
 
 Current implementation:
-
-- Automatic orbital altitude adjustment
-- Safety threshold monitoring
-- Dynamic trajectory modification
+- Full 3-Burn Phasing Maneuvers (Evasion, Reversal, Circularization)
+- Automatic EOL (End of Life) Graveyard Orbit tracking based on mass depletion
+- Dynamic Fleet Propellant deduction calculated strictly through $\Delta v$ physics
+- Real-time telemetry feedback integration
 
 ---
 
 ## 🌍 Interactive Mission Control Dashboard
 
-Modern WebGL visualization powered by React.
+Professional, NASA-inspired matte visualization interface.
 
 Includes:
-
-- Interactive Earth model
-- Satellite visualization
-- Debris rendering
-- Live conjunction logs
-- Real-time telemetry updates
+- Interactive 2D Mercator Deck.GL Map
+- Satellite tracking with active status highlighting
+- Target-locked Conjunction Radar (Bullseye Plot)
+- Live $\Delta v$ Cost Analysis Area Graphs
+- Real-Time Fleet Propellant Heatmap Gauges
 
 ---
 
@@ -141,11 +135,9 @@ The platform is divided into three independent services to maximize responsivene
 Acts as the external tracking station.
 
 Responsibilities:
-
-- Download Starlink TLEs
-- Propagate orbital states
-- Generate synthetic debris
-- Sanitize invalid numerical values
+- Download Starlink and Iridium-33 Debris TLEs
+- Propagate orbital states natively
+- Generate synthetic tracking debris 
 - Stream telemetry every second
 
 ---
@@ -155,36 +147,27 @@ Responsibilities:
 Serves as the mission-control engine.
 
 Responsibilities:
-
 - High-throughput telemetry ingestion
-- Immediate collision detection
-- Future prediction engine
+- Immediate collision detection ($O(\log N)$ complexity)
+- Future prediction engine 
 - Autonomous maneuver planning
-
-Performance optimizations include:
-
-- Raw byte request parsing
-- Background prediction tasks
-- Deep-copy simulation states
-- GIL yielding during heavy computations
+- Exposing sanitized visualization snapshot APIs
 
 ---
 
 ## 3. React Dashboard
 
-Mission-control interface providing:
-
-- 3D Earth visualization
-- Satellite tracking
-- Debris rendering
-- Conjunction monitoring
-- Fleet management
+NASA-styled mission-control interface providing:
+- 2D Deck.GL Earth visualization
+- Conjunction Radar monitoring
+- $\Delta v$ expenditure tracking
+- Fleet Network management sidebar
 
 Technology Stack:
-
 - React
-- Tailwind CSS
-- React Three Fiber
+- Tailwind CSS (NASA Matte Theme)
+- Deck.GL / React-Map-GL
+- Recharts
 - Zustand
 
 ---
@@ -193,10 +176,9 @@ Technology Stack:
 
 ## Runge-Kutta 4th Order (RK4)
 
-Future orbital positions are computed using fourth-order Runge-Kutta numerical integration.
+Future orbital positions are computed using fourth-order Runge-Kutta numerical integration, taking into account Earth's gravitational parameters and J2 perturbation.
 
 Advantages:
-
 - High numerical accuracy
 - Stable orbital propagation
 - Low accumulated integration error
@@ -214,7 +196,7 @@ O(N^2)
 
 comparisons.
 
-Instead, AETHER organizes orbital objects inside a SciPy cKDTree, reducing the search complexity to
+Instead, AETHER organizes orbital objects inside a SciPy `cKDTree`, reducing the search complexity to
 
 ```math
 O(N \log N)
@@ -224,45 +206,18 @@ allowing thousands of orbital objects to be processed efficiently.
 
 ---
 
-## Data Sanitization
+# Performance & Benchmarking
 
-Orbital propagation occasionally produces invalid numerical values caused by decaying trajectories or floating-point instability.
+The mathematical engine is highly optimized for Kessler Syndrome orbital scenarios. You can verify the engine's performance by running the built-in benchmarking suite:
 
-Before transmission, every payload is recursively sanitized by replacing:
+```bash
+cd backend
+python benchmark.py
+```
 
-- NaN
-- Infinity
-- Invalid floating-point values
-
-ensuring reliable JSON serialization.
-
----
-
-# Performance
-
-Current development configuration
-
-| Metric | Value |
-|---------|-------|
-| Satellites | 200 |
-| Debris | 300 |
-| Total Objects | 500 |
-| Update Frequency | 1 Hz |
-| Prediction Window | 24 Hours |
-
----
-
-## Scalability
-
-The mathematical engine has been tested with simulations containing over **10,000 orbital objects**.
-
-Current bottlenecks originate primarily from:
-
-- Large JSON payload transmission
-- Windows ↔ WSL2 networking overhead
-- HTTP polling latency
-
-The underlying collision detection algorithm remains scalable due to KD-Tree spatial indexing.
+Current benchmarking tests validate:
+1. **$O(\log N)$ Spatial Indexing:** Proves the KD-tree can resolve 100,000 piece debris clouds against the constellation in `< 150ms`.
+2. **Autopilot Maneuver Latency:** Proves the phasing astrodynamics algorithm calculates the complete 3-burn sequences in `< 10ms`.
 
 ---
 
@@ -274,20 +229,20 @@ Orbital-Debris-Avoidance-Constellation-Management-System/
 │
 ├── backend/
 │   ├── api/
-│   ├── physics/
-│   ├── models/
-│   ├── services/
+│   ├── core/
 │   ├── main.py
+│   ├── benchmark.py
 │   └── requirements.txt
 │
 ├── frontend/
 │   ├── src/
-│   ├── components/
-│   ├── store/
-│   ├── public/
-│   └── package.json
+│   │   ├── components/
+│   │   ├── store/
+│   │   └── styles/
+│   ├── package.json
+│   └── tailwind.config.js
 │
-├── live_streamer.py
+├── telemetry_generator.py
 │
 ├── images/
 │   └── showcase.png
@@ -346,7 +301,6 @@ uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
 Backend documentation:
-
 ```
 http://127.0.0.1:8000/docs
 ```
@@ -360,11 +314,10 @@ cd frontend
 
 npm install
 
-npm start
+npm run dev
 ```
 
 Open:
-
 ```
 http://localhost:3000
 ```
@@ -374,7 +327,7 @@ http://localhost:3000
 ## Start Live Telemetry Streamer
 
 ```bash
-python live_streamer.py
+python telemetry_generator.py
 ```
 
 The dashboard will begin rendering satellites, debris objects, and conjunction warnings in real time.
@@ -395,7 +348,7 @@ Example payload:
   "objects": [
     {
       "id": "STARLINK-1008",
-      "type": "satellite",
+      "type": "SATELLITE",
       "r": {
         "x": 4200.1,
         "y": -1200.4,
@@ -423,8 +376,8 @@ Example response:
 {
   "timestamp": "...",
   "satellites": [],
-  "debris": [],
-  "warnings": []
+  "debris_cloud": [],
+  "active_warnings": []
 }
 ```
 
@@ -439,9 +392,7 @@ Planned enhancements include:
 - GPU-accelerated orbital propagation
 - Distributed simulation workers
 - Machine learning-based conjunction prediction
-- Interactive maneuver planning
 - Historical replay mode
-- Space weather integration
 - Cloud-native deployment
 
 ---
@@ -458,6 +409,6 @@ See the `LICENSE` file for more information.
 
 ## Built With
 
-**Python • FastAPI • React • Tailwind CSS • React Three Fiber • Skyfield • SciPy • NumPy • Zustand • Docker**
+**Python • FastAPI • React • Tailwind CSS • Deck.GL • Recharts • Skyfield • SciPy • NumPy • Zustand**
 
 </div>

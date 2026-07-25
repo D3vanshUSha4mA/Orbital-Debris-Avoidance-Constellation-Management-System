@@ -3,16 +3,20 @@ import GlobeScene from './components/Globe/GlobeScene';
 import { useSpaceStore } from './store/useSpaceStore';
 import { Activity, Crosshair, ShieldAlert } from 'lucide-react';
 import ManeuverTimeline from './components/HUD/ManeuverTimeline';
+import BullseyePlot from './components/Dashboard/BullseyePlot';
+import FleetTelemetry from './components/Dashboard/FleetTelemetry';
 
 function App() {
   const startPolling = useSpaceStore(state => state.startPolling);
   const flyToTarget = useSpaceStore(state => state.flyToTarget);
   const executeManeuver = useSpaceStore(state => state.executeManeuver);
   
-  const { satellites, debris, warnings } = useSpaceStore(state => ({
+  const { satellites, debris, warnings, selectedSatId, setSelectedSatId } = useSpaceStore(state => ({
     satellites: state.satellites,
     debris: state.debris,
-    warnings: state.warnings
+    warnings: state.warnings,
+    selectedSatId: state.selectedSatId,
+    setSelectedSatId: state.setSelectedSatId
   }));
 
   useEffect(() => {
@@ -21,25 +25,22 @@ function App() {
   }, [startPolling]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-space text-white font-mono selection:bg-hud-cyan selection:text-black">
+    <div className="relative w-screen h-screen overflow-hidden bg-space text-gray-200 font-sans selection:bg-hud-blue selection:text-white">
       
-      {/* 3D WebGL Background */}
+      {/* 2D Map Background */}
       <GlobeScene />
-
-      {/* CRT Scanline Effect Overlay */}
-      <div className="pointer-events-none absolute inset-0 z-10 w-full h-full opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] animate-scanline" />
 
       {/* Top Metrics Bar */}
       <header className="absolute top-0 left-0 w-full p-4 z-20 flex justify-between items-start pointer-events-none">
-        <div className="flex items-center gap-4 border-b border-hud-cyan pb-2 pr-12 bg-gradient-to-r from-panel to-transparent backdrop-blur-sm">
-          <Activity className="text-hud-cyan w-8 h-8 animate-pulse" />
+        <div className="flex items-center gap-4 border-b-2 border-hud-cyan pb-2 pr-12 bg-panel shadow-lg rounded-br-lg">
+          <Activity className="text-hud-cyan w-6 h-6 ml-4" />
           <div>
-            <h1 className="text-2xl font-bold tracking-widest text-hud-cyan shadow-neon-cyan">ORBITAL INSIGHT</h1>
-            <p className="text-xs text-hud-cyan/70 tracking-widest">ACM MISSION CONTROL</p>
+            <h1 className="text-xl font-extrabold tracking-widest text-white mt-2">ORBITAL INSIGHT</h1>
+            <p className="text-[10px] text-gray-400 tracking-widest mb-2 font-mono">NASA ACM MISSION CONTROL</p>
           </div>
         </div>
 
-        <div className="flex gap-8 bg-panel backdrop-blur-md px-6 py-3 rounded border border-hud-dim">
+        <div className="flex gap-8 bg-panel shadow-lg px-6 py-3 rounded-bl-lg border-b-2 border-hud-cyan">
           <Metric label="ACTIVE SATS" value={satellites.length} color="text-hud-cyan" />
           <Metric label="WARNINGS" value={warnings.length} color="text-hud-warn" />
           <Metric label="DEBRIS" value={debris.length} color="text-hud-crit" />
@@ -48,20 +49,20 @@ function App() {
 
       {/* Left Sidebar - Fleet Network */}
       <aside className="absolute top-24 left-4 bottom-16 w-80 z-20 flex flex-col gap-4 pointer-events-auto">
-        <div className="bg-panel backdrop-blur-md border border-hud-dim h-full rounded p-4 flex flex-col">
-          <h2 className="text-sm tracking-widest text-hud-cyan mb-4 flex items-center gap-2">
-            <Crosshair className="w-4 h-4" /> FLEET NETWORK
+        <div className="bg-panel border border-hud-dim shadow-xl h-full rounded-xl p-4 flex flex-col">
+          <h2 className="text-xs font-bold tracking-widest text-gray-300 mb-4 flex items-center gap-2 border-b border-hud-dim pb-2">
+            <Crosshair className="w-4 h-4 text-hud-cyan" /> FLEET NETWORK
           </h2>
           <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
             {satellites.map(sat => (
               <div 
                 key={sat.id} 
-                onClick={() => flyToTarget(sat.lon, sat.lat)}
-                className="p-3 border border-hud-dim/50 rounded cursor-pointer hover:bg-hud-cyan/20 transition-colors group"
+                onClick={() => { flyToTarget(sat.lon, sat.lat); setSelectedSatId(sat.id); }}
+                className={`p-3 rounded border cursor-pointer transition-colors group ${selectedSatId === sat.id ? 'border-hud-cyan bg-hud-cyan/10' : 'border-hud-dim/30 hover:bg-white/5'} font-mono`}
               >
                 <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-sm group-hover:text-white transition-colors">{sat.id}</span>
-                  <span className={`text-xs ${sat.status === 'EVADING' ? 'text-hud-warn animate-pulse-fast' : 'text-hud-cyan'}`}>
+                  <span className="font-bold text-sm text-gray-200">{sat.id}</span>
+                  <span className={`text-xs font-bold ${sat.status === 'EVADING' ? 'text-hud-warn' : 'text-hud-cyan'}`}>
                     {sat.status}
                   </span>
                 </div>
@@ -71,47 +72,53 @@ function App() {
               </div>
             ))}
           </div>
+          <div className="mt-4 h-[280px]">
+              <FleetTelemetry satellites={satellites} />
+          </div>
         </div>
       </aside>
 
       {/* Right Sidebar - Conjunction Monitor */}
       <aside className="absolute top-24 right-4 bottom-16 w-96 z-20 flex flex-col gap-4 pointer-events-auto">
-        <div className="bg-panel backdrop-blur-md border border-hud-crit/30 shadow-[0_0_15px_rgba(255,42,42,0.1)] h-full rounded p-4 flex flex-col">
-          <h2 className="text-sm tracking-widest text-hud-crit mb-4 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 animate-pulse" /> CONJUNCTION LOGS
+        <div className="bg-panel border border-hud-crit/20 shadow-xl h-full rounded-xl p-4 flex flex-col">
+          <h2 className="text-xs font-bold tracking-widest text-gray-300 mb-4 flex items-center gap-2 border-b border-hud-dim pb-2">
+            <ShieldAlert className="w-4 h-4 text-hud-crit" /> CONJUNCTION LOGS
           </h2>
-          <div className="space-y-3 flex-1 overflow-y-auto">
+          <div className="space-y-3 flex-1 overflow-y-auto font-mono custom-scrollbar pr-2">
             {warnings.map((warn, i) => (
-              <div key={i} className="p-3 border border-hud-crit/50 bg-hud-crit/5 rounded shadow-neon-crit">
+              <div key={i} className="p-3 border border-hud-crit/30 bg-black/40 rounded shadow-sm">
                 <div className="flex justify-between mb-1">
                   <span className="text-xs text-gray-400">TARGET:</span>
-                  <span className="text-sm font-bold">{warn.obj_1}</span>
+                  <span className="text-sm font-bold text-white">{warn.obj_1}</span>
                 </div>
                 <div className="flex justify-between mb-1">
                   <span className="text-xs text-gray-400">THREAT:</span>
-                  <span className="text-sm text-hud-crit">{warn.obj_2}</span>
+                  <span className="text-sm font-bold text-hud-crit">{warn.obj_2}</span>
                 </div>
-                <div className="flex justify-between items-center mt-2 pt-2 border-t border-hud-crit/20">
-                  <span className="text-xs text-hud-warn">TCA DIST: {warn.distance_km}km</span>
+                <div className="flex justify-between items-center mt-3 pt-2 border-t border-hud-crit/20">
+                  <span className="text-xs text-hud-warn font-bold">{warn.distance_km}km TCA</span>
                   
                   {/* THIS IS THE NEW BUTTON */}
                   <button 
                     onClick={() => {
-                      // 1. Fly camera to the satellite
                       const targetSat = satellites.find(s => s.id === warn.obj_1);
                       if(targetSat) flyToTarget(targetSat.lon, targetSat.lat);
-                      
-                      // 2. Execute the burn command
                       executeManeuver(warn.obj_1);
                     }}
-                    className="text-[10px] bg-hud-crit hover:bg-white hover:text-hud-crit text-black px-2 py-1 rounded font-bold transition-all cursor-pointer shadow-[0_0_10px_rgba(255,42,42,0.5)]"
+                    className="text-[10px] bg-hud-crit hover:bg-red-700 text-white px-3 py-1.5 rounded font-bold transition-all cursor-pointer shadow-md"
                   >
-                    EXECUTE BURN
+                    EXECUTE MANEUVER
                   </button>
 
                 </div>
               </div>
             ))}
+          </div>
+          <div className="mt-4">
+              <BullseyePlot 
+                  activeWarnings={warnings} 
+                  selectedSatellite={satellites.find(s => s.id === selectedSatId)} 
+              />
           </div>
         </div>
       </aside>
@@ -122,8 +129,8 @@ function App() {
       </aside>
 
       {/* Bottom Status Banner */}
-      <div className="absolute bottom-0 left-0 w-full bg-hud-crit text-black py-1 z-30 text-center font-bold tracking-[0.2em] text-sm shadow-neon-crit overflow-hidden">
-        <div className="animate-pulse">AUTONOMOUS INTERCEPT EVASION ENGINE ACTIVE</div>
+      <div className="absolute bottom-0 left-0 w-full bg-hud-cyan text-black py-1.5 z-30 text-center font-bold tracking-[0.2em] text-xs shadow-md">
+        <div>AUTONOMOUS INTERCEPT EVASION ENGINE ACTIVE</div>
       </div>
       
     </div>

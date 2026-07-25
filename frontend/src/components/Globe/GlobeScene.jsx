@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
-import { _GlobeView as GlobeView, FlyToInterpolator } from '@deck.gl/core';
-import { ScatterplotLayer, GeoJsonLayer, PathLayer, ArcLayer } from '@deck.gl/layers'; 
+import { MapView, FlyToInterpolator } from '@deck.gl/core';
+import { ScatterplotLayer, GeoJsonLayer, PathLayer, PolygonLayer } from '@deck.gl/layers';
+import { PathStyleExtension } from '@deck.gl/extensions';
 import { useSpaceStore } from '../../store/useSpaceStore';
 
 export default function GlobeScene() {
@@ -17,11 +18,17 @@ export default function GlobeScene() {
     new GeoJsonLayer({
       id: 'earth-base',
       data: 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_land.geojson',
-      stroked: true,
+      stroked: false,
       filled: true,
+      getFillColor: [17, 24, 39, 255], // Match panel background
+    }),
+    new GeoJsonLayer({
+      id: 'earth-borders',
+      data: 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson',
+      stroked: true,
+      filled: false,
       lineWidthMinPixels: 1,
-      getLineColor: [0, 243, 255, 40],
-      getFillColor: [5, 10, 21, 200], 
+      getLineColor: [55, 65, 81, 255], // Match border color
     }),
 
     // Culled Threat Neighborhood Layer
@@ -29,47 +36,34 @@ export default function GlobeScene() {
       id: 'debris-layer',
       data: debris,
       getPosition: d => d.coordinates,
-      getFillColor: [255, 42, 42, 200],
-      getRadius: 15000,
+      getFillColor: [239, 68, 68, 255], // Standard Red
+      getRadius: 20000,
       radiusMinPixels: 2,
       radiusMaxPixels: 5,
     }),
 
-    // Vector Insertion Path Connection
-    new ArcLayer({
-      id: 'evasion-jump-arc',
-      data: satellites.filter(s => s.status === 'EVADING'),
-      getSourcePosition: d => [d.coordinates[0], d.coordinates[1], d.coordinates[2] - 1500000],
-      getTargetPosition: d => d.coordinates,
-      getSourceColor: [255, 42, 42, 200], 
-      getTargetColor: [255, 170, 0, 255], 
-      widthUnits: 'pixels',               
-      getWidth: 4,
-      getHeight: 0.2,                     
-    }),
-
-    // Parametric Trajectory Prediction Paths
+    // Parametric Trajectory Prediction Paths (90 minutes dashed)
     new PathLayer({
       id: 'evasion-trajectory-layer',
-      data: satellites.filter(s => s.status === 'EVADING').map(s => {
+      data: satellites,
+      getPath: s => {
         const [lon, lat, alt] = s.coordinates;
-        const path = [];
-        const nominalAlt = alt - 1500000; 
-
-        for (let i = 0; i <= 30; i++) {
-          const t = i / 30; 
-          const projectedLon = lon + (t * 10); 
-          const projectedAlt = nominalAlt + (1500000 * (1 - Math.pow(1 - t, 3))); 
-          path.push([projectedLon, lat, projectedAlt]);
+        const path = [[lon, lat, alt]];
+        // Approximate orbital path (frontend-only for visual representation)
+        for (let i = 1; i <= 30; i++) {
+            let nextLat = lat - Math.sin(i * 0.1) * 10;
+            nextLat = Math.max(-85, Math.min(85, nextLat));
+            path.push([lon + (i * 2), nextLat, alt]); 
         }
-        return { path };
-      }),
-      getPath: d => d.path,
-      getColor: [255, 170, 0, 200], 
+        return path;
+      },
+      getColor: [59, 130, 246, 150], // Professional blue
       widthUnits: 'pixels',               
-      getWidth: 5,                        
-      jointRounded: true,
-      capRounded: true,
+      getWidth: 2,                        
+      getDashArray: [4, 4],
+      dashJustified: true,
+      dashGapPickable: true,
+      extensions: [new PathStyleExtension({dash: true})]
     }),
 
     // Constellation Node Network Layer
@@ -78,8 +72,8 @@ export default function GlobeScene() {
       data: satellites,
       getPosition: d => d.coordinates,
       getFillColor: d => {
-        if (d.status === 'EVADING') return [255, 170, 0, 255]; 
-        return [0, 243, 255, 255]; 
+        if (d.status === 'EVADING') return [245, 158, 11, 255]; // Standard Warning Orange
+        return [59, 130, 246, 255]; // Professional Blue
       },
       getRadius: 40000,
       radiusMinPixels: 4,
@@ -119,7 +113,7 @@ export default function GlobeScene() {
       }}
     >
       <DeckGL
-        views={new GlobeView({ resolution: 2 })}
+        views={new MapView({ repeat: true })}
         viewState={{
           ...viewState,
           transitionInterpolator: viewState.transitionInterpolator === 'fly-to' 
@@ -127,7 +121,7 @@ export default function GlobeScene() {
             : null
         }}
         onViewStateChange={({ viewState }) => setViewState(viewState)}
-        controller={true}
+        controller={{ dragRotate: false, doubleClickZoom: false }}
         layers={layers}
       />
     </div>

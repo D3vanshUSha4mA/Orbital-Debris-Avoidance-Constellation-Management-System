@@ -38,8 +38,7 @@ import math
 
 import math
 
-# THE FIX: Added *args to safely absorb the 4th parameter
-def eci_to_lat_lon_alt(x, y, z, *args):
+def eci_to_lat_lon_alt(x, y, z, timestamp_iso=None, *args):
     # Calculate the radial distance
     r = math.sqrt(x**2 + y**2 + z**2)
     
@@ -48,10 +47,22 @@ def eci_to_lat_lon_alt(x, y, z, *args):
         return 0.0, 0.0, 0.0 
         
     latitude = math.degrees(math.asin(z / r))
-    longitude = math.degrees(math.atan2(y, x))
     
-    # Calculate altitude
-    EARTH_RADIUS_KM = 6371.0
+    gmst_rad = 0.0
+    if timestamp_iso:
+        try:
+            dt = datetime.fromisoformat(timestamp_iso.replace('Z', '+00:00'))
+            gmst_rad = calculate_gmst(dt)
+        except Exception:
+            pass
+
+    lon_rad = math.atan2(y, x) - gmst_rad
+    # Normalize longitude to [-180, 180]
+    lon_rad = (lon_rad + math.pi) % (2 * math.pi) - math.pi
+    longitude = math.degrees(lon_rad)
+    
+    # Calculate altitude using standardized equatorial radius
+    EARTH_RADIUS_KM = 6378.137
     altitude = r - EARTH_RADIUS_KM
     
     return latitude, longitude, altitude

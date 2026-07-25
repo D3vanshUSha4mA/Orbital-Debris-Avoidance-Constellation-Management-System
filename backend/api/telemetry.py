@@ -6,12 +6,9 @@ from typing import List
 from backend.core.state import SIMULATION_STATE
 from backend.core.collision import detect_collisions
 from backend.core.conjunction_service import run_predictive_ca
-from backend.core.evasion_manager import EvasionManager  # <-- NEW IMPORT
+from backend.core.state import fleet_evasion_manager
 
 router = APIRouter()
-
-# Instantiate the evasion manager globally so it remembers maneuvers between seconds
-fleet_evasion_manager = EvasionManager()
 
 # --- PYDANTIC MODELS ---
 class Vector3D(BaseModel):

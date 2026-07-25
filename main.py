@@ -3,10 +3,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import all the routers we built
-from backend.core.evasion_manager import EvasionManager
-
-# Instantiate the manager globally so it remembers state between requests
-fleet_evasion_manager = EvasionManager()
 from backend.api.telemetry import router as telemetry_router
 from backend.api.maneuver import router as maneuver_router
 from backend.api.simulate import router as simulate_router
@@ -18,7 +14,7 @@ app = FastAPI(title="Autonomous Constellation Manager (AETHER)")
 # Enable CORS for your upcoming Claude-built frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], 
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

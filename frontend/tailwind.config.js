@@ -7,22 +7,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        space: '#050a15',
-        panel: 'rgba(10, 16, 30, 0.75)',
+        space: '#080C16',
+        panel: '#111827', // Matte dark gray
+        border: '#374151',
         hud: {
-          cyan: '#00f3ff',
-          blue: '#0d6efd',
-          warn: '#ffaa00',
-          crit: '#ff2a2a',
-          dim: 'rgba(0, 243, 255, 0.2)'
+          cyan: '#3B82F6', // Professional blue
+          blue: '#1D4ED8',
+          warn: '#F59E0B', // Standard warning orange
+          crit: '#EF4444', // Standard error red
+          dim: '#1F2937'
         }
       },
       fontFamily: {
-        mono: ['"JetBrains Mono"', 'monospace']
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
       },
       animation: {
         'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'scanline': 'scanline 8s linear infinite',
       },
       keyframes: {
         scanline: {

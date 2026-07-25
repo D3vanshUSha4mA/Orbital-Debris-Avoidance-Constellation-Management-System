@@ -44,9 +44,10 @@ def detect_collisions(simulation_state):
             distance = np.linalg.norm(np.array(sat_coord) - deb_coord)
 
             active_warnings.append({
-                "satellite_id": sat_id,
-                "debris_id": deb_id,
-                "distance_km": round(distance, 3)
+                "obj_1": sat_id,
+                "obj_2": deb_id,
+                "distance_km": round(distance, 3),
+                "status": "CRITICAL" if distance < CRITICAL_THRESHOLD_KM else "WARNING"
             })
 
     return active_warnings

@@ -23,8 +23,7 @@ async def get_visualization_snapshot():
 
         is_evading = sat_id in evading_sats
         
-        # Keep the +1500km altitude applied globally once the maneuver triggers
-        display_alt = alt + 1500.0 if is_evading else alt
+        display_alt = alt
         status_text = "EVADING" if is_evading else "NOMINAL"
 
         formatted_satellites.append({
@@ -46,12 +45,12 @@ async def get_visualization_snapshot():
             timestamp
         )
 
-        formatted_debris.append({
-            "id": deb_id,
-            "lat": round(lat, 3),
-            "lon": round(lon, 3),
-            "alt_km": round(alt, 3)
-        })
+        formatted_debris.append([
+            deb_id,
+            round(lat, 3),
+            round(lon, 3),
+            round(alt, 3)
+        ])
 
     # 3. THE FIX: Pass all warnings directly to the UI
     # We must not filter out evading satellites, otherwise the UI logs will be empty!

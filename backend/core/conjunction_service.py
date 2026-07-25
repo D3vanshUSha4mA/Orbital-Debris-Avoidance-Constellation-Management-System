@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from backend.core.physics import rk4_step
 
 # --- PREDICTION CONSTANTS ---
-TIME_STEP_SEC = 300.0  # 5 minutes per step
+TIME_STEP_SEC = 30.0  # 30 seconds per step for accuracy
 PREDICTION_HOURS = 24
 TOTAL_STEPS = int((PREDICTION_HOURS * 3600) / TIME_STEP_SEC)
 COLLISION_THRESHOLD_KM = 10.0
@@ -102,13 +102,14 @@ def run_predictive_ca(simulation_state):
                 distance = np.linalg.norm(r_next - deb_r)
 
                 future_cdms.append({
-                    "satellite_id": sid,
-                    "debris_id": deb_id,
+                    "obj_1": sid,
+                    "obj_2": deb_id,
                     "time_of_closest_approach": current_sim_time.isoformat(),
                     "hours_until_collision": round(
                         (step * TIME_STEP_SEC) / 3600, 2
                     ),
-                    "miss_distance_km": round(distance, 3)
+                    "distance_km": round(distance, 3),
+                    "status": "PREDICTED"
                 })
 
     return future_cdms

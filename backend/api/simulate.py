@@ -37,8 +37,8 @@ def forecast_24h_conjunctions():
     # Clone the state so we don't accidentally alter the real simulation
     future_state = copy.deepcopy(SIMULATION_STATE)
     
-    # We will step forward in 5-minute (300 second) intervals to balance speed and accuracy
-    prediction_step_sec = 300 
+    # We will step forward in 30-second intervals to balance speed and accuracy
+    prediction_step_sec = 30 
     intervals = (24 * 3600) // prediction_step_sec
     
     future_warnings = []

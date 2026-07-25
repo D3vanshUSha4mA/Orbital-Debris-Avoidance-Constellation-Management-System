@@ -56,8 +56,7 @@ export const useSpaceStore = create((set, get) => ({
           sat.id === satelliteId 
             ? { 
                 ...sat, 
-                status: 'EVADING', 
-                coordinates: [sat.coordinates[0], sat.coordinates[1], sat.coordinates[2] + 1500000] 
+                status: 'EVADING' 
               } 
             : sat
         )
@@ -105,17 +104,18 @@ export const useSpaceStore = create((set, get) => ({
       const rawDebris = liveData.debris_cloud || [];
       
       const debrisWithDistances = rawDebris.map(deb => {
+        const [id, lat, lon, alt_km] = deb;
         let minDistanceSq = Infinity;
         for (let i = 0; i < satellites.length; i++) {
           const sat = satellites[i];
-          const dLon = deb.lon - sat.lon;
-          const dLat = deb.lat - sat.lat;
+          const dLon = lon - sat.lon;
+          const dLat = lat - sat.lat;
           const distSq = (dLon * dLon) + (dLat * dLat); 
           if (distSq < minDistanceSq) {
             minDistanceSq = distSq;
           }
         }
-        return { ...deb, minDistanceSq };
+        return { id, lat, lon, alt_km, minDistanceSq };
       });
 
       debrisWithDistances.sort((a, b) => a.minDistanceSq - b.minDistanceSq);
@@ -133,37 +133,37 @@ export const useSpaceStore = create((set, get) => ({
       const incomingCriticals = (liveData.active_warnings || [])
           .filter(warn => warn.distance_km <= CRITICAL_DISTANCE_KM)
           .map(warn => ({
-              obj_1: warn.satellite_id,
-              obj_2: warn.debris_id,
+              obj_1: warn.obj_1 || warn.satellite_id,
+              obj_2: warn.obj_2 || warn.debris_id,
               distance_km: warn.distance_km,
-              status: "CRITICAL"
+              status: warn.status || "CRITICAL"
           }));
 
       const existingWarnings = get().warnings;
       const activeManeuverIds = new Set(get().activeManeuvers.map(m => m.id));
-      const mergedWarnings = [...existingWarnings];
+      const mergedWarnings = [];
 
-      // FIX 2: Allow updates to evading satellites and prevent direct state mutation
+      // Only keep existing warnings that are still critical OR actively evading
+      existingWarnings.forEach(w => {
+         const stillCritical = incomingCriticals.some(inc => inc.obj_1 === w.obj_1 && inc.obj_2 === w.obj_2);
+         const isEvading = activeManeuverIds.has(w.obj_1);
+         if (stillCritical || isEvading) {
+            mergedWarnings.push({...w, status: isEvading ? "EVADING" : w.status});
+         }
+      });
+
+      // Add new warnings and update distances
       incomingCriticals.forEach(incoming => {
-        const existingIndex = mergedWarnings.findIndex(w => w.obj_1 === incoming.obj_1);
-        const isEvading = activeManeuverIds.has(incoming.obj_1);
-        
-        const status = isEvading ? "EVADING" : "CRITICAL";
-
-        if (existingIndex === -1) {
-          mergedWarnings.push({
-            ...incoming,
-            status: status
-          });
-        } else {
-          // Creating a new object reference so React detects the change
-          mergedWarnings[existingIndex] = {
-            ...mergedWarnings[existingIndex],
-            distance_km: incoming.distance_km,
-            obj_2: incoming.obj_2,
-            status: status
-          };
-        }
+         const existingIndex = mergedWarnings.findIndex(w => w.obj_1 === incoming.obj_1 && w.obj_2 === incoming.obj_2);
+         const isEvading = activeManeuverIds.has(incoming.obj_1);
+         if (existingIndex === -1) {
+            mergedWarnings.push({
+               ...incoming,
+               status: isEvading ? "EVADING" : incoming.status
+            });
+         } else {
+            mergedWarnings[existingIndex].distance_km = incoming.distance_km;
+         }
       });
 
       if (!abortSignal.aborted) {
